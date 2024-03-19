@@ -14,8 +14,10 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation("org.apache.kafka:kafka-clients:3.0.0")
+    implementation("org.apache.kafka:kafka-clients:3.6.1")
     implementation("org.apache.flink:flink-java:${flinkVersion}")
+
+    implementation("org.apache.flink:flink-connector-base:${flinkVersion}")
     implementation("org.apache.flink:flink-connector-kafka:3.1.0-1.18")
     implementation("org.apache.flink:flink-table-api-java-bridge:${flinkVersion}")
 

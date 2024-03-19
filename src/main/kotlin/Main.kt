@@ -4,8 +4,6 @@ import org.apache.flink.connector.kafka.source.KafkaSource
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer
 import org.apache.flink.streaming.api.datastream.DataStream
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
-import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -16,7 +14,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
-
+import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 
 fun main(args: Array<String>) {
     fun createProducer(): Producer<String, String> {
@@ -69,11 +67,11 @@ fun main(args: Array<String>) {
     val producer2 = createProducer()
     producer2.produceMessages("topic2")
 
-    print("producers started"
-    )
+    println("producers started"    )
 
     // setup a simple Flink pipeline reading data from Kafka topic1 and topic2
     val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment()
+    val executionConfig = env.config
 
     val source1: KafkaSource<String> = KafkaSource.builder<String>()
         .setBootstrapServers("localhost:9092")
@@ -81,7 +79,7 @@ fun main(args: Array<String>) {
         .setGroupId("test")
         .setStartingOffsets(OffsetsInitializer.earliest())
         .setValueOnlyDeserializer(SimpleStringSchema())
-        .build()
+       .build()
 
     val source2: KafkaSource<String> = KafkaSource.builder<String>()
         .setBootstrapServers("localhost:9092")
@@ -95,9 +93,12 @@ fun main(args: Array<String>) {
 
     val topic1Stream: DataStream<String> = env.fromSource(source1, WatermarkStrategy.noWatermarks(), "Topic1 Source")
     val topic2Stream: DataStream<String> = env.fromSource(source2, WatermarkStrategy.noWatermarks(), "Topic2 Source")
-    topic1Stream.print()
-    topic2Stream.print()
+    topic1Stream.addSink(PrintSinkFunction<String>())
+    topic2Stream.addSink(PrintSinkFunction<String>())
 
-    env.execute();
+
+    env.execute("job name")
+
+    println("done")
 
 }
