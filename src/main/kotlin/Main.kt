@@ -10,4 +10,8 @@ fun main(args: Array<String>) {
     }
     println("done")
 
+    RedisPubSub.observe(pool.resource, "channel").subscribe { message ->
+        println("Received message: $message")
+    }
+
 }
