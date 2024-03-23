@@ -1,5 +1,6 @@
 
 import io.lettuce.core.RedisClient
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import java.util.concurrent.CountDownLatch
 
@@ -7,19 +8,14 @@ fun main() {
     // Create a new RedisClient using the default settings
     val redisClient: RedisClient = RedisClient.create("redis://localhost:6379")
 
-    // The channel to observe
-    val channel1 = "channel"
-    val channel2 = "channel2"
+    val channels = listOf("channel", "channel2")
 
-    // Call the observe function and subscribe to the Observable it returns
-    val disposable: Disposable = RedisPubSub.observe(redisClient, channel1).subscribe(
-        { message -> println("1> Received message: $message") },  // onNext
-        { error -> println("Error: ${error.message}") },  // onError
-        { println("Completed") }  // onComplete
-    )
+    val observables = channels.map { RedisPubSub.observe(redisClient, it) }
 
-    val disposable2: Disposable = RedisPubSub.observe(redisClient, channel2).subscribe(
-        { message -> println("2> Received message: $message") },  // onNext
+    val mergedObservable: Observable<String> = Observable.merge(observables)
+
+    val disposable = mergedObservable.subscribe(
+        { message -> println("Received message: $message") },  // onNext
         { error -> println("Error: ${error.message}") },  // onError
         { println("Completed") }  // onComplete
     )
@@ -35,6 +31,4 @@ fun main() {
 
     // Dispose of the disposable when the application is terminated
     disposable.dispose()
-    disposable2.dispose()
-
 }
