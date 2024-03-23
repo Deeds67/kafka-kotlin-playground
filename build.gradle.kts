@@ -14,14 +14,9 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    implementation("org.apache.kafka:kafka-clients:3.6.1")
-    implementation("org.apache.flink:flink-java:${flinkVersion}")
-
-    implementation("org.apache.flink:flink-clients:${flinkVersion}")
-    implementation("org.apache.flink:flink-connector-base:${flinkVersion}")
-    implementation("org.apache.flink:flink-connector-kafka:3.1.0-1.18")
-    implementation("org.apache.flink:flink-table-api-java-bridge:${flinkVersion}")
-
+    implementation("redis.clients:jedis:5.0.0")
+    implementation("io.reactivex.rxjava3:rxjava:3.1.8")
+    implementation("org.reactivestreams:reactive-streams:1.0.4")
 }
 
 tasks.test {
