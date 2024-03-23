@@ -12,9 +12,9 @@ fun main() {
 
     val observables = channels.map { RedisPubSub.observe(redisClient, it) }
 
-    val mergedObservable: Observable<String> = Observable.merge(observables)
+    val combinedObservable: Observable<List<String>> = Observable.combineLatest(observables) { it.toList() as List<String> }
 
-    val disposable = mergedObservable.subscribe(
+    val disposable = combinedObservable.subscribe(
         { message -> println("Received message: $message") },  // onNext
         { error -> println("Error: ${error.message}") },  // onError
         { println("Completed") }  // onComplete
