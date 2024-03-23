@@ -22,8 +22,7 @@ object RedisPubSub {
                     executor.execute { emitter.onError(exception) }
                 }
             }
-
-            jedis.subscribe(jedisPubSub, channel)
+            executor.execute { jedis.subscribe(jedisPubSub, channel) }
 
             emitter.setCancellable { jedisPubSub.unsubscribe() }
         }
