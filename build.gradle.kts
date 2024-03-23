@@ -15,6 +15,7 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
     implementation("redis.clients:jedis:5.0.0")
+    implementation("io.lettuce:lettuce-core:6.3.2.RELEASE")
     implementation("io.reactivex.rxjava3:rxjava:3.1.8")
     implementation("org.reactivestreams:reactive-streams:1.0.4")
 }
