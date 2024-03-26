@@ -21,9 +21,6 @@ object RedisPubSub {
                 val currentTimestamp = Instant.now().epochSecond
                 emitter.onNext(it.message)
             }.subscribe()
-
-
-
         }
     }
 }
