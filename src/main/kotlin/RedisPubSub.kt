@@ -3,20 +3,27 @@ import io.lettuce.core.RedisClient
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands
 import io.reactivex.rxjava3.core.Observable
+import java.time.Instant
+
+
 
 object RedisPubSub {
-    fun observe(redisClient: RedisClient, channel: String): Observable<String> {
-        val connection: StatefulRedisPubSubConnection<String, String> = redisClient.connectPubSub()
-        val reactiveCommands: RedisPubSubReactiveCommands<String, String> = connection.reactive()
-
+    val redisClient: RedisClient = RedisClient.create("redis://localhost:6379")
+    val connection: StatefulRedisPubSubConnection<String, String> = redisClient.connectPubSub()
+    val reactive: RedisPubSubReactiveCommands<String, String> = connection.reactive()
+    fun observe(channel: String): Observable<String> {
         return Observable.create { emitter ->
-            reactiveCommands.subscribe(channel).subscribe()
+            reactive.subscribe(channel).subscribe()
+            emitter.setCancellable { reactive.unsubscribe(channel) }
 
-            reactiveCommands.observeChannels().filter { message -> message.channel == channel }.subscribe { message ->
-                emitter.onNext(message.message)
-            }
+            reactive.observeChannels().doOnNext {
+                // val values: FloatArray = deserializeFloats(it.message)
+                val currentTimestamp = Instant.now().epochSecond
+                emitter.onNext(it.message)
+            }.subscribe()
 
-            emitter.setCancellable { reactiveCommands.unsubscribe(channel) }
+
+
         }
     }
 }
