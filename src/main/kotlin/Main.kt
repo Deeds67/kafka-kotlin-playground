@@ -10,6 +10,15 @@ import java.util.concurrent.TimeUnit
 // TODO: Use a "ConnectableObservable" for the RedisPubSub observable - so that the same value can be used by other calculations
 import java.time.Instant
 
+// TODO: On startup read "SPREAD_MATRIX_ID" from environment vars
+// TODO: Load the spread matrix from DB (using exposed)
+// TODO: Find redis channels to subscribe to for these symbols
+// TODO: Run the RxJava spread calculator - and publish the calculated spread matrix back on a redis channel (using the same matrix id) for the frontend to subscribe to and send to user
+
+// How to deal with diffs? Should spread matrix calc publish snapshots + diffs to 2x redis channels (one for snapshot, one for diffs)?
+// then the frontend doesnt have to do the json diff...
+// but rather just pipe the diffs to the frontend after the snapshot
+
 data class PricePoint(val bid: Double, val ask: Double, val bidVolume: Double, val askVolume: Double,val epochSecond: Long , val tsDiff: Long )
 
 
@@ -40,11 +49,11 @@ fun main() {
 
 
 //        .debounce( 100, TimeUnit.MILLISECONDS ).
-    val observableEthusdc = RedisPubSub.observe("exch-1-ethusdc").subscribeOn(computationScheduler).map {deserializePricePoint(it)}
-    val observable240405 = RedisPubSub.observe("exch-1-ethusdeth-240405").subscribeOn(computationScheduler).map {deserializePricePoint(it)}
-    val observable240426 = RedisPubSub.observe( "exch-1-ethusdeth-240426").subscribeOn(computationScheduler).map {deserializePricePoint(it)}
-    val observable240628 = RedisPubSub.observe( "exch-1-ethusdeth-240628").subscribeOn(computationScheduler).map {deserializePricePoint(it)}
-    val observable241227 = RedisPubSub.observe( "exch-1-ethusdeth-241227").subscribeOn(computationScheduler).map {deserializePricePoint(it)}
+    val observableEthusdc = RedisPubSub.observe("exch-1-ethusdc").debounce( 100, TimeUnit.MILLISECONDS ).subscribeOn(computationScheduler).map {deserializePricePoint(it)}
+    val observable240405 = RedisPubSub.observe("exch-1-ethusdeth-240405").debounce( 100, TimeUnit.MILLISECONDS ).subscribeOn(computationScheduler).map {deserializePricePoint(it)}
+    val observable240426 = RedisPubSub.observe( "exch-1-ethusdeth-240426").debounce( 100, TimeUnit.MILLISECONDS ).subscribeOn(computationScheduler).map {deserializePricePoint(it)}
+    val observable240628 = RedisPubSub.observe( "exch-1-ethusdeth-240628").debounce( 100, TimeUnit.MILLISECONDS ).subscribeOn(computationScheduler).map {deserializePricePoint(it)}
+    val observable241227 = RedisPubSub.observe( "exch-1-ethusdeth-241227").debounce( 100, TimeUnit.MILLISECONDS ).subscribeOn(computationScheduler).map {deserializePricePoint(it)}
 
     // val combinedObservable: Observable<List<String>> = Observable.combineLatest(observables) { it.toList() as List<String> }
 
@@ -87,8 +96,6 @@ fun main() {
 
         ethusdeth241227.ask - ethusdc.bid
     }
-
-
 
     val spreadMatrix : Observable<List<Double>> = Observable.combineLatest(listOf(observableSpot240405,  observableSpot240426, observableSpot240628, observableSpot241227)) { inputs ->
         val spreadObservableSpot240405 = inputs[0] as Double
